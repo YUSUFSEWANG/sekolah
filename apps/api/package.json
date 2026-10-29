@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "build:vercel": "tsc -p tsconfig.json --outDir dist-vercel",
     "dev": "npm run build && node --watch dist/main.js",
     "start": "node dist/main.js",
     "test": "npm run build && node --test dist/app.test.js"

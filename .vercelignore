@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+.git
+node_modules
+apps/*/node_modules
+apps/*/dist
+apps/*/dist-vercel
+playwright-report
+test-results

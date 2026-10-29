@@ -2,7 +2,7 @@
 
 School, in sync. Dashboard manajemen sekolah bergaya mint, coral, dan editorial untuk portofolio full-stack. Antarmuka berbahasa Indonesia, desktop dan mobile, dengan Manrope / Plus Jakarta Sans, Lucide, Recharts, serta primitive Radix yang aksesibel.
 
-**Status: MVP awal yang dapat dijalankan, bukan seluruh produk produksi dalam PRD.** Mode default adalah demo melalui API NestJS dengan data di memori. PostgreSQL tersedia melalui Prisma, tetapi perlu Docker/PostgreSQL aktif untuk migrasi dan pengujian persistensi sebenarnya. Tanpa API key, fitur asisten adalah ringkasan berbasis aturan yang diberi label jelas, bukan respons model AI.
+**Status: MVP awal yang dapat dijalankan, bukan seluruh produk produksi dalam PRD.** Deployment online tersedia di https://sekolah-beige-six.vercel.app dengan API NestJS dan PostgreSQL Neon Free. Mode lokal tanpa `DATABASE_URL` tetap memakai demo memori. Tanpa API key, fitur asisten adalah ringkasan berbasis aturan yang diberi label jelas, bukan respons model AI.
 
 ## Menjalankan Demo
 
@@ -50,6 +50,34 @@ Migrasi awal tersimpan di `prisma/migrations/20261029000000_init`. Untuk databas
 
 Mode database tidak menyediakan login satu klik. Masuk memakai email akun seed, password `SEED_PASSWORD`, dan ID sekolah di atas. Jangan membagikan password seed atau menyimpannya di Git.
 
+## Deployment Vercel
+
+- URL production: https://sekolah-beige-six.vercel.app
+- Team/proyek: `yusufsewangs-projects/sekolah`.
+- Database: Neon Free `edupilot-postgres`, region Singapura, terpisah dari Docker lokal.
+- API: satu fungsi Node.js di `api/index.js`, dengan bootstrap NestJS yang dipakai bersama server lokal. Routing `/api/*` dan frontend berada pada domain yang sama.
+- Build Vercel: `npm run build:vercel`; artefak API di `apps/api/dist-vercel`, frontend di `apps/web/dist`. Compiler TypeScript 5.9 dipakai untuk semua workspace; hanya lockfile root yang digunakan.
+- Password akun online dibuat acak dan disimpan lokal sebagai `SEED_PASSWORD` di `.env.vercel-accounts.local`. Password ini berbeda dari password demo memori maupun Docker lokal. Email dan ID sekolah tetap seperti tabel akun di atas.
+- Semua `.env*`, metadata Vercel, hasil build, dan hasil test dikecualikan dari Git/unggahan. Jangan menaruh koneksi database atau API key pada variabel `VITE_*`.
+
+Untuk setup pertama pada database cloud **baru** yang telah terhubung ke Vercel:
+
+```powershell
+npx vercel env pull .env.vercel.production.local --environment production
+npm run build:vercel -w apps/api
+node scripts/cloud-database.cjs
+```
+
+Script hanya menerima database non-localhost, memakai koneksi direct untuk migrasi, membuat password acak jika file akun belum ada, dan tidak menimpa sekolah yang sudah di-seed. Jalankan hanya pada database demo yang memang dimaksudkan untuk EduPilot.
+
+Deploy ulang source saat ini:
+
+```powershell
+npx vercel deploy --prod --scope yusufsewangs-projects
+```
+
+Build Linux bersih telah diuji di container terisolasi. Login empat peran, cookie Secure/HttpOnly, scope guru/siswa, gambar, dan layout desktop/mobile telah diuji langsung pada URL production. Integrasi model AI belum aktif karena `OPENAI_API_KEY` belum dipasang.
+
 ## AI Backend
 
 Atur `OPENAI_API_KEY` di environment API dan, jika diperlukan, `OPENAI_MODEL` (default `gpt-4.1-mini`). Tidak ada key di bundle frontend. Restart API setelah mengubah environment.
@@ -82,7 +110,7 @@ Timeout provider 25 detik, kegagalan menjadi respons 503 tanpa membocorkan secre
 - Belum ada Redis/queue, worker, metrik penggunaan token, kuota biaya AI persisten, atau notifikasi push. Pusat aktivitas memakai data pengumuman/audit.
 - Endpoint workspace mengirim data sesuai akses sekaligus; pagination pencarian masih client-side. Perlu pagination server-side untuk skala produksi.
 - Audit dan beberapa mutasi belum satu transaksi lintas-record. Rate limiter auth berada di memori. Hardening produksi, retention, backup, CSP, distribusi sesi, monitoring, dan uji PostgreSQL end-to-end perlu diselesaikan sebelum memakai data sekolah sungguhan.
-- Aplikasi belum dideploy publik. API lokal bind ke loopback. Untuk deployment, gunakan reverse proxy same-origin/HTTPS dan `NODE_ENV=production` agar cookie Secure aktif; endpoint demo otomatis nonaktif.
+- Deployment Vercel menggunakan HTTPS dan cookie Secure; endpoint demo tanpa password tetap nonaktif. API lokal tetap bind ke loopback. Deployment ini menggunakan data contoh dan belum dinyatakan siap untuk data sekolah sungguhan.
 
 ## Pengujian
 
