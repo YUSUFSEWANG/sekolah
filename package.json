@@ -1,0 +1,36 @@
+{
+  "name": "edupilot-ai",
+  "version": "0.1.0",
+  "private": true,
+  "overrides": {
+    "deepmerge-ts": "8.0.2",
+    "js-yaml": "5.5.0",
+    "multer": "2.5.0"
+  },
+  "workspaces": [
+    "apps/web",
+    "apps/api"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n API,WEB \"npm run dev -w apps/api\" \"npm run dev -w apps/web -- --host 127.0.0.1\"",
+    "build": "npm run build --workspaces",
+    "test": "npm run test -w apps/api",
+    "test:e2e": "playwright test",
+    "test:all": "npm test && npm run test:e2e",
+    "format": "prettier --write \"apps/*/src/**/*.{ts,tsx,css}\" apps/*/package.json apps/*/tsconfig*.json apps/web/vite.config.ts package.json playwright.config.ts tests README.md",
+    "lint": "npm run lint -w apps/web",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "npm run build -w apps/api && node apps/api/dist/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "concurrently": "^9.2.1",
+    "prettier": "^3.9.10",
+    "prisma": "^6.19.0"
+  }
+}

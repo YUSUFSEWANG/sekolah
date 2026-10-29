@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PRINCIPAL
+  TEACHER
+  STUDENT
+}
+
+model School {
+  id      String @id @default(uuid()) @db.Uuid
+  name    String
+  slug    String @unique
+  members Member[]
+}
+
+model Member {
+  id           String @id @default(uuid()) @db.Uuid
+  schoolId     String @db.Uuid
+  school       School @relation(fields: [schoolId], references: [id])
+  email        String
+  name         String
+  role         Role
+  passwordHash String
+  className    String?
+  studentId    String?
+  sessions     Session[]
+  @@unique([schoolId, email])
+}
+
+model Session {
+  tokenHash String @id
+  memberId  String @db.Uuid
+  member    Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  @@index([expiresAt])
+}
+
+model Student {
+  id        String @id @default(uuid()) @db.Uuid
+  schoolId  String @db.Uuid
+  name      String
+  number    String
+  className String
+  email     String
+  gender    String
+  status    String @default("Hadir")
+  score     Float @default(0)
+  attended  Int @default(0)
+  sessions  Int @default(0)
+  archived  Boolean @default(false)
+  @@unique([schoolId, number])
+  @@index([schoolId, className])
+}
+
+model Teacher {
+  id       String @id @default(uuid()) @db.Uuid
+  schoolId String @db.Uuid
+  name     String
+  subject  String
+  email    String
+  classes  Int
+  @@index([schoolId])
+}
+
+model SchoolClass {
+  id       String @id @default(uuid()) @db.Uuid
+  schoolId String @db.Uuid
+  name     String
+  teacher  String
+  room     String
+  @@unique([schoolId, name])
+}
+
+model Subject {
+  id       String @id @default(uuid()) @db.Uuid
+  schoolId String @db.Uuid
+  name     String
+  code     String
+  hours    Int
+  @@unique([schoolId, code])
+}
+
+model Assignment {
+  id        String @id @default(uuid()) @db.Uuid
+  schoolId  String @db.Uuid
+  title     String
+  subject   String
+  className String
+  deadline  String
+  submitted Int @default(0)
+  total     Int
+  @@index([schoolId, className])
+}
+
+model Schedule {
+  id        String @id @default(uuid()) @db.Uuid
+  schoolId  String @db.Uuid
+  className String
+  day       String
+  startTime String
+  endTime   String
+  subject   String
+  teacher   String
+  room      String
+  @@index([schoolId, className])
+}
+
+model Announcement {
+  id       String @id @default(uuid()) @db.Uuid
+  schoolId String @db.Uuid
+  title    String
+  content  String
+  category String
+  date     String
+  author   String
+  @@index([schoolId])
+}
+
+model Report {
+  id        String @id @default(uuid()) @db.Uuid
+  schoolId  String @db.Uuid
+  title     String
+  content   String
+  createdAt String
+  createdBy String
+  @@index([schoolId])
+}
+
+model AuditLog {
+  id        String @id @default(uuid()) @db.Uuid
+  schoolId  String @db.Uuid
+  action    String
+  actor     String
+  createdAt String
+  @@index([schoolId])
+}
+
+model AttendanceRecord {
+  id        String @id @default(uuid()) @db.Uuid
+  schoolId  String @db.Uuid
+  studentId String @db.Uuid
+  date      String
+  status    String
+  @@unique([schoolId, studentId, date])
+}
